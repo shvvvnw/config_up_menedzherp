@@ -1,0 +1,5 @@
+package_name: requests
+repository_url: https://pypi.org/pypi
+test_mode: false
+ascii_tree: true
+max_depth: 3

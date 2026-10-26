@@ -1,12 +1,12 @@
 import yaml
 
 from configuration import load_config
-from graph import build_graph, find_cycles
+from graph import build_graph, dependency_load_order, find_cycles
 from repository import fetch_dependencies, load_test_repository, normalize_name
 
 
-def main():
-    config = load_config()
+def main(config_file=None):
+    config = load_config(config_file)
     root = config["package_name"]
     cache = {}
 
@@ -30,7 +30,10 @@ def main():
                 )
             return cache[package]
 
-    graph = build_graph(root, config["max_depth"], get_dependencies)
+    unexpanded = set()
+    graph = build_graph(
+        root, config["max_depth"], get_dependencies, unexpanded
+    )
 
     print("\nГраф зависимостей:")
 
@@ -49,6 +52,22 @@ def main():
             print(" -> ".join(cycle))
     else:
         print("\nВ построенной части графа циклы не обнаружены.")
+
+    if cycles:
+        print("\nПорядок загрузки невозможен: граф содержит цикл.")
+    else:
+        order = dependency_load_order(graph)
+        if unexpanded:
+            print("\nПорядок загрузки для построенной части графа:")
+        else:
+            print("\nПорядок загрузки (зависимости перед пакетами):")
+        print(" -> ".join(order))
+
+    if unexpanded:
+        print("\nИз-за ограничения глубины не исследованы: "
+              + ", ".join(sorted(unexpanded)))
+        print("Полный порядок загрузки и отсутствие скрытых циклов "
+              "не гарантируются.")
 
 
 def run():

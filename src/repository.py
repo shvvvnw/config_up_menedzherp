@@ -1,5 +1,6 @@
 import json
 import re
+from http.client import HTTPException
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import urlopen
@@ -49,6 +50,10 @@ def fetch_dependencies(package, repository_url):
         raise ValueError(f"Ошибка подключения: {error.reason}") from error
     except TimeoutError as error:
         raise ValueError(f"Истекло время ожидания для {package}") from error
+    except HTTPException as error:
+        raise ValueError(
+            f"Сервер прервал передачу данных для {package}. Повторите запуск."
+        ) from error
 
     if not isinstance(data, dict) or not isinstance(data.get("info"), dict):
         raise ValueError(f"{package}: неправильный ответ сервера")

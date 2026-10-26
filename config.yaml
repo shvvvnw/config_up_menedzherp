@@ -1,5 +1,5 @@
-package_name: requests
-repository_url: https://pypi.org/pypi
-test_mode: false
+package_name: A
+repository_url: test_rapo.yaml
+test_mode: true
 ascii_tree: true
 max_depth: 3

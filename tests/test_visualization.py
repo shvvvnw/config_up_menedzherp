@@ -86,9 +86,10 @@ class VisualizationTests(unittest.TestCase):
 
     def test_cli_ascii_toggle(self):
         for enabled in (True, False):
+            fixture = ROOT / "tests" / "fixtures" / "chain.yaml"
             config = dict(package_name="A", test_mode=True, max_depth=3,
                           ascii_tree=enabled,
-                          repository_url=str(ROOT / "tests" / "fixtures" / "chain.yaml"))
+                          repository_url=str(fixture))
             output = io.StringIO()
             with patch("main.load_config", return_value=config):
                 with contextlib.redirect_stdout(output):

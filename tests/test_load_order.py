@@ -46,7 +46,8 @@ class LoadOrderTests(unittest.TestCase):
             dependency_load_order(self.graph("self_cycle.yaml"))
 
     def test_isolated_and_empty(self):
-        self.assertEqual(dependency_load_order(self.graph("isolated.yaml")), ["A"])
+        order = dependency_load_order(self.graph("isolated.yaml"))
+        self.assertEqual(order, ["A"])
         self.assertEqual(dependency_load_order({}), [])
 
     def test_long_chain_without_recursion(self):
@@ -81,8 +82,9 @@ class LoadOrderTests(unittest.TestCase):
             ("chain.yaml", "C -> B -> A"),
             ("cycle.yaml", "Порядок загрузки невозможен"),
         ):
+            fixture = ROOT / "tests" / "fixtures" / filename
             config = dict(package_name="A", test_mode=True,
-                          repository_url=str(ROOT / "tests" / "fixtures" / filename),
+                          repository_url=str(fixture),
                           max_depth=10, ascii_tree=True)
             output = io.StringIO()
             with patch("main.load_config", return_value=config):
@@ -91,8 +93,9 @@ class LoadOrderTests(unittest.TestCase):
             self.assertIn(expected, output.getvalue())
 
     def test_cli_warns_about_hidden_cycles(self):
+        fixture = ROOT / "tests" / "fixtures" / "cycle.yaml"
         config = dict(package_name="A", test_mode=True,
-                      repository_url=str(ROOT / "tests" / "fixtures" / "cycle.yaml"),
+                      repository_url=str(fixture),
                       max_depth=1, ascii_tree=True)
         output = io.StringIO()
         with patch("main.load_config", return_value=config):
@@ -102,7 +105,8 @@ class LoadOrderTests(unittest.TestCase):
         self.assertIn("скрытых циклов не гарантируются", output.getvalue())
 
     def test_interrupted_response_has_clear_error(self):
-        with patch("repository.urlopen", side_effect=IncompleteRead(b"partial")):
+        interrupted = IncompleteRead(b"partial")
+        with patch("repository.urlopen", side_effect=interrupted):
             with self.assertRaisesRegex(ValueError, "прервал передачу"):
                 fetch_dependencies("requests", "https://pypi.org/pypi")
 

@@ -6,35 +6,30 @@ from repository import fetch_dependencies, load_test_repository, normalize_name
 from visualization import to_ascii_tree, to_d2
 
 
-def main(config_file=None):
-    config = load_config(config_file)
+def _dependency_source(config):
     root = config["package_name"]
-    cache = {}
 
     if config["test_mode"]:
         repository = load_test_repository(config["repository_url"])
-
         if root not in repository:
             raise ValueError(f"Пакет {root} отсутствует в тестовом репозитории")
+        return root, repository.__getitem__
 
-        def get_dependencies(package):
-            return repository[package]
+    root = normalize_name(root)
+    cache = {}
 
-    else:
-        root = normalize_name(root)
+    def get_dependencies(package):
+        if package not in cache:
+            print(f"Получение зависимостей: {package}")
+            cache[package] = fetch_dependencies(
+                package, config["repository_url"]
+            )
+        return cache[package]
 
-        def get_dependencies(package):
-            if package not in cache:
-                print(f"Получение зависимостей: {package}")
-                cache[package] = fetch_dependencies(
-                    package, config["repository_url"]
-                )
-            return cache[package]
+    return root, get_dependencies
 
-    unexpanded = set()
-    graph = build_graph(
-        root, config["max_depth"], get_dependencies, unexpanded
-    )
+
+def _print_graph(graph):
 
     print("\nГраф зависимостей:")
 
@@ -45,8 +40,9 @@ def main(config_file=None):
     print("\n[] — нет исходящих связей в построенной части графа.")
     print("Узлы на предельной глубине не запрашивались.")
 
-    cycles = find_cycles(graph)
 
+def _print_analysis(graph, unexpanded):
+    cycles = find_cycles(graph)
     if cycles:
         print("\nОбнаружены циклы:")
         for cycle in cycles:
@@ -70,14 +66,29 @@ def main(config_file=None):
         print("Полный порядок загрузки и отсутствие скрытых циклов "
               "не гарантируются.")
 
+
+def _print_visualization(graph, root, unexpanded, config):
     print("\nГраф в формате D2:")
     print(to_d2(graph, root, unexpanded), end="")
 
     if config["ascii_tree"]:
         print("\nASCII-дерево:")
-        print(to_ascii_tree(graph, root, unexpanded, config["max_depth"]), end="")
+        tree = to_ascii_tree(graph, root, unexpanded, config["max_depth"])
+        print(tree, end="")
         print("[cycle] — цикл; [seen] — уже показан; "
               "[depth limit] — предел глубины.")
+
+
+def main(config_file=None):
+    config = load_config(config_file)
+    root, get_dependencies = _dependency_source(config)
+    unexpanded = set()
+    graph = build_graph(
+        root, config["max_depth"], get_dependencies, unexpanded
+    )
+    _print_graph(graph)
+    _print_analysis(graph, unexpanded)
+    _print_visualization(graph, root, unexpanded, config)
 
 
 def run():

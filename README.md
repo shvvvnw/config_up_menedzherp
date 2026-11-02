@@ -6,8 +6,11 @@
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 src/main.py
+./run.sh
 ```
+
+На macOS и Linux скрипт `run.sh` запускает Python из `.venv`, если она
+создана, иначе использует `python3`. Его можно вызывать из любой папки.
 
 Настройки читаются из `config.yaml` в корне проекта. Путь тестового
 репозитория отсчитывается от папки конфигурации.

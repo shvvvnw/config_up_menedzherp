@@ -20,7 +20,8 @@ def to_d2(graph, root=None, unexpanded=()):
         label = package
         if package in boundary:
             label += " [depth limit]"
-        lines.append(f"{identifier}: {json.dumps(label, ensure_ascii=False)} {{")
+        quoted_label = json.dumps(label, ensure_ascii=False)
+        lines.append(f"{identifier}: {quoted_label} {{")
         if package == root:
             lines.append('  style.fill: "#dbeafe"')
         if package in boundary:
@@ -38,6 +39,32 @@ def to_d2(graph, root=None, unexpanded=()):
     return "\n".join(lines) + "\n"
 
 
+def _tree_marker(package, ancestors, boundary, depth, max_depth,
+                 graph, seen_depth):
+    if package in ancestors:
+        return " [cycle]"
+    if package in boundary:
+        return " [depth limit]"
+    if max_depth is not None and depth >= max_depth and graph[package]:
+        return " [depth limit]"
+    if package in seen_depth and seen_depth[package] <= depth:
+        return " [seen]"
+    return ""
+
+
+def _push_children(stack, graph, package, prefix, connector,
+                   ancestors, depth):
+    children = list(dict.fromkeys(graph[package]))
+    child_prefix = prefix
+    if connector:
+        child_prefix += "    " if connector == "`-- " else "|   "
+
+    for index in range(len(children) - 1, -1, -1):
+        child_connector = "`-- " if index == len(children) - 1 else "|-- "
+        stack.append((children[index], child_prefix, child_connector,
+                      ancestors + (package,), depth + 1))
+
+
 def to_ascii_tree(graph, root, unexpanded=(), max_depth=None):
     validate_graph(graph, root)
     if max_depth is not None and (type(max_depth) is not int or max_depth < 0):
@@ -50,29 +77,14 @@ def to_ascii_tree(graph, root, unexpanded=(), max_depth=None):
 
     while stack:
         package, prefix, connector, ancestors, depth = stack.pop()
-        marker = ""
-        if package in ancestors:
-            marker = " [cycle]"
-        elif package in boundary or (
-            max_depth is not None and depth >= max_depth and graph[package]
-        ):
-            marker = " [depth limit]"
-        elif package in seen_depth and seen_depth[package] <= depth:
-            marker = " [seen]"
-
+        marker = _tree_marker(package, ancestors, boundary, depth,
+                              max_depth, graph, seen_depth)
         lines.append(prefix + connector + package + marker)
         if marker:
             continue
 
         seen_depth[package] = depth
-        children = list(dict.fromkeys(graph[package]))
-        child_prefix = prefix
-        if connector:
-            child_prefix += "    " if connector == "`-- " else "|   "
-
-        for index in range(len(children) - 1, -1, -1):
-            child_connector = "`-- " if index == len(children) - 1 else "|-- "
-            stack.append((children[index], child_prefix, child_connector,
-                          ancestors + (package,), depth + 1))
+        _push_children(stack, graph, package, prefix, connector,
+                       ancestors, depth)
 
     return "\n".join(lines) + "\n"

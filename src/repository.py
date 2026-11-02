@@ -8,6 +8,9 @@ from urllib.request import urlopen
 import yaml
 
 
+HTTP_NOT_FOUND = 404
+
+
 def load_test_repository(filename):
     with open(filename, encoding="utf-8") as file:
         repository = yaml.safe_load(file)
@@ -24,7 +27,9 @@ def load_test_repository(filename):
 
         for dependency in dependencies:
             if not isinstance(dependency, str):
-                raise ValueError(f"{package}: имя зависимости должно быть строкой")
+                raise ValueError(
+                    f"{package}: имя зависимости должно быть строкой"
+                )
             if dependency not in repository:
                 raise ValueError(f"Пакет {dependency} не описан в репозитории")
 
@@ -35,7 +40,7 @@ def normalize_name(name):
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def fetch_dependencies(package, repository_url):
+def _read_package_data(package, repository_url):
     base_url = repository_url.rstrip("/")
     url = f"{base_url}/{quote(package, safe='')}/json"
 
@@ -43,7 +48,7 @@ def fetch_dependencies(package, repository_url):
         with urlopen(url, timeout=15) as response:
             data = json.load(response)
     except HTTPError as error:
-        if error.code == 404:
+        if error.code == HTTP_NOT_FOUND:
             raise ValueError(f"Пакет {package} не найден") from error
         raise ValueError(f"Ошибка HTTP для {package}: {error.code}") from error
     except URLError as error:
@@ -55,6 +60,10 @@ def fetch_dependencies(package, repository_url):
             f"Сервер прервал передачу данных для {package}. Повторите запуск."
         ) from error
 
+    return data
+
+
+def _requirements_to_names(package, data):
     if not isinstance(data, dict) or not isinstance(data.get("info"), dict):
         raise ValueError(f"{package}: неправильный ответ сервера")
 
@@ -71,7 +80,8 @@ def fetch_dependencies(package, repository_url):
         if not isinstance(requirement, str):
             raise ValueError(f"{package}: зависимость должна быть строкой")
 
-        match = re.match(r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)", requirement)
+        pattern = r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)"
+        match = re.match(pattern, requirement)
         if match is None:
             raise ValueError(f"Не удалось прочитать зависимость: {requirement}")
 
@@ -80,3 +90,8 @@ def fetch_dependencies(package, repository_url):
             dependencies.append(name)
 
     return dependencies
+
+
+def fetch_dependencies(package, repository_url):
+    data = _read_package_data(package, repository_url)
+    return _requirements_to_names(package, data)

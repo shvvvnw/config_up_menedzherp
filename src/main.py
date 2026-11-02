@@ -3,6 +3,7 @@ import yaml
 from configuration import load_config
 from graph import build_graph, dependency_load_order, find_cycles
 from repository import fetch_dependencies, load_test_repository, normalize_name
+from visualization import to_ascii_tree, to_d2
 
 
 def main(config_file=None):
@@ -68,6 +69,15 @@ def main(config_file=None):
               + ", ".join(sorted(unexpanded)))
         print("Полный порядок загрузки и отсутствие скрытых циклов "
               "не гарантируются.")
+
+    print("\nГраф в формате D2:")
+    print(to_d2(graph, root, unexpanded), end="")
+
+    if config["ascii_tree"]:
+        print("\nASCII-дерево:")
+        print(to_ascii_tree(graph, root, unexpanded, config["max_depth"]), end="")
+        print("[cycle] — цикл; [seen] — уже показан; "
+              "[depth limit] — предел глубины.")
 
 
 def run():

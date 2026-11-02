@@ -1,0 +1,10 @@
+{
+  "package": "six",
+  "generated_at": "2026-10-26T13:00:13.357249+00:00",
+  "repository_url": "https://pypi.org/pypi",
+  "max_depth": 1,
+  "graph": {
+    "six": []
+  },
+  "unexpanded": []
+}

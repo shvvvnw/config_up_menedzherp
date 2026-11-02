@@ -1,0 +1,6 @@
+urllib3
+|-- brotli [depth limit]
+|-- brotlicffi [depth limit]
+|-- h2 [depth limit]
+|-- pysocks [depth limit]
+`-- backports-zstd [depth limit]

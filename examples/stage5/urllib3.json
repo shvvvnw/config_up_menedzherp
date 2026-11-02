@@ -1,0 +1,27 @@
+{
+  "package": "urllib3",
+  "generated_at": "2026-10-26T13:00:12.818831+00:00",
+  "repository_url": "https://pypi.org/pypi",
+  "max_depth": 1,
+  "graph": {
+    "urllib3": [
+      "brotli",
+      "brotlicffi",
+      "h2",
+      "pysocks",
+      "backports-zstd"
+    ],
+    "backports-zstd": [],
+    "pysocks": [],
+    "h2": [],
+    "brotlicffi": [],
+    "brotli": []
+  },
+  "unexpanded": [
+    "backports-zstd",
+    "brotli",
+    "brotlicffi",
+    "h2",
+    "pysocks"
+  ]
+}

@@ -1,0 +1,7 @@
+requests
+|-- charset-normalizer [depth limit]
+|-- idna [depth limit]
+|-- urllib3 [depth limit]
+|-- certifi [depth limit]
+|-- pysocks [depth limit]
+`-- chardet [depth limit]
